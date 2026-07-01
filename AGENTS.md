@@ -46,19 +46,19 @@ Do not add runners, bundlers, transpilers, or wrappers unless they reduce code.
 
 ## Coding Style & Naming Conventions
 
-Follow YAGNI: implement only current MCP commands and extraction. Prefer Node core modules. Add packages through `nub.js` only when impractical; Puppeteer handles Kifli browsing.
+Follow YAGNI: implement only current MCP commands and extraction. Prefer Node core modules. Add packages through `nub.js` only when impractical. Kifli data access uses direct JSON API requests through Node's built-in `fetch`.
 
 Format every file with Prettier. Use `camelCase` for variables/functions, `PascalCase` for types/classes, and `snake_case` for files. Keep TypeScript strict at public boundaries.
 
 ## MCP & Kifli Behavior
 
-Expose MCP commands for Kifli product search and product detail lookup. Search should open `kifli.hu` in headless Puppeteer, extract results, and include a stable SKU/product ID. Detail lookup accepts that ID, loads the product page, extracts details, and streams results over SSE.
+Expose MCP commands for Kifli product search and product detail lookup. Search should call Kifli's data APIs, extract results, and include a stable SKU/product ID. Detail lookup accepts that ID or a Kifli product URL, fetches direct product data, and streams results over SSE.
 
 Return minimal, model-friendly JSON. Avoid raw HTML unless needed for debugging.
 
 ## Testing Guidelines
 
-All committed code must maintain 100% test coverage. Use Node’s built-in `node:test` through `nub.js` under `test/`. Prefer deterministic unit tests for parsing and command behavior. Mock browser/page boundaries where practical; mark live Kifli tests as integration coverage.
+All committed code must maintain 100% test coverage. Use Node’s built-in `node:test` through `nub.js` under `test/`. Prefer deterministic unit tests for parsing and command behavior. Mock fetch boundaries where practical; mark live Kifli tests as integration coverage.
 
 Test names should describe behavior, for example `search-extracts-product-ids.test.ts`.
 
@@ -66,8 +66,8 @@ Test names should describe behavior, for example `search-extracts-product-ids.te
 
 No Git history is available, so use short imperative commit subjects such as `Add Kifli search command`. Keep commits focused.
 
-Pull requests should include the MCP commands changed, verification commands, coverage result, and notes for any Puppeteer or Kifli selector changes.
+Pull requests should include the MCP commands changed, verification commands, coverage result, and notes for any Kifli API response shape changes.
 
 ## Security & Configuration Tips
 
-Do not commit secrets, browser profiles, cookies, or local `.env` files. Keep scraping polite: use headless mode, avoid unnecessary requests, and centralize timeouts.
+Do not commit secrets or local `.env` files. Keep Kifli requests polite and avoid unnecessary API calls.

@@ -14,24 +14,7 @@ export type ProductDetails = ProductSummary & {
   attributes: Record<string, string>;
 };
 
-export type BrowserPage = {
-  setExtraHTTPHeaders?(headers: Record<string, string>): Promise<void>;
-  goto(
-    url: string,
-    options: {
-      waitUntil: 'domcontentloaded' | 'networkidle2';
-      timeout: number;
-    },
-  ): Promise<unknown>;
-  content(): Promise<string>;
-};
-
-export type Browser = {
-  newPage(): Promise<BrowserPage>;
-  close(): Promise<void>;
-};
-
-export type BrowserFactory = () => Promise<Browser>;
+export type JsonFetcher = (url: string) => Promise<unknown>;
 
 export type JsonRpcRequest = {
   jsonrpc: '2.0';
@@ -55,7 +38,6 @@ export type McpDependencies = {
 export type Session = { res: ServerResponse };
 
 export type Config = {
-  browserTimeoutMs: number;
   kifliOrigin: string;
   port: number;
   protocolVersion: string;

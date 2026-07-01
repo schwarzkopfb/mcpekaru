@@ -4,7 +4,6 @@ import { loadConfig } from '../src/config.ts';
 
 test('loadConfig uses defaults when environment values are absent', () => {
   assert.deepEqual(loadConfig({}), {
-    browserTimeoutMs: 30_000,
     kifliOrigin: 'https://www.kifli.hu',
     port: 8787,
     protocolVersion: '2025-03-26',
@@ -16,7 +15,6 @@ test('loadConfig uses defaults when environment values are absent', () => {
 test('loadConfig prefers environment values', () => {
   assert.deepEqual(
     loadConfig({
-      BROWSER_TIMEOUT_MS: '1500',
       KIFLI_ORIGIN: 'https://example.test',
       MCP_PROTOCOL_VERSION: 'test-protocol',
       MCP_SERVER_NAME: 'test-server',
@@ -24,7 +22,6 @@ test('loadConfig prefers environment values', () => {
       PORT: '9999',
     }),
     {
-      browserTimeoutMs: 1500,
       kifliOrigin: 'https://example.test',
       port: 9999,
       protocolVersion: 'test-protocol',
@@ -35,12 +32,5 @@ test('loadConfig prefers environment values', () => {
 });
 
 test('loadConfig falls back for invalid numeric values', () => {
-  assert.equal(
-    loadConfig({ BROWSER_TIMEOUT_MS: 'nope', PORT: 'NaN' }).port,
-    8787,
-  );
-  assert.equal(
-    loadConfig({ BROWSER_TIMEOUT_MS: 'nope', PORT: 'NaN' }).browserTimeoutMs,
-    30_000,
-  );
+  assert.equal(loadConfig({ PORT: 'NaN' }).port, 8787);
 });

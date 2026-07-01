@@ -1,153 +1,190 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { config } from '../src/config.ts';
 import {
   absoluteKifliUrl,
-  buildSearchUrl,
-  extractJsonLd,
-  extractProductDetails,
-  extractProductSummaries,
+  buildProductApiUrl,
+  buildProductCategoriesApiUrl,
+  buildProductPricesApiUrl,
+  buildSearchApiUrl,
+  extractProductDetailsFromApiResponses,
+  extractProductSummariesFromSearchResponse,
   getKifliProductDetails,
   searchKifli,
 } from '../src/kifli.ts';
-import type { Browser } from '../src/types.ts';
 
-const productJson = JSON.stringify({
-  '@type': 'Product',
-  sku: 'SKU123',
-  name: 'Kakaos csiga',
-  url: '/termek/kakaos-csiga',
-  description: 'Friss pekaru',
-  brand: { name: 'Kifli' },
-  image: ['/image.jpg'],
-  offers: { price: 599 },
-});
-
-test('buildSearchUrl encodes Kifli queries', () => {
-  assert.equal(
-    buildSearchUrl('kakaos csiga'),
-    'https://www.kifli.hu/kereses?q=kakaos%20csiga',
-  );
-  assert.equal(absoluteKifliUrl('/termek/x'), 'https://www.kifli.hu/termek/x');
-});
-
-test('extractJsonLd ignores invalid blocks and decodes entities', () => {
-  const html = `<script type="application/ld+json">{&quot;@type&quot;:&quot;Product&quot;}</script><script type="application/ld+json">x</script>`;
-  assert.deepEqual(extractJsonLd(html), [{ '@type': 'Product' }]);
-});
-
-test('extractProductSummaries reads JSON-LD products', () => {
-  assert.deepEqual(
-    extractProductSummaries(
-      `<script type="application/ld+json">${productJson}</script>`,
-    ),
-    [
+const searchPayload = {
+  data: {
+    productList: [
       {
-        id: 'SKU123',
-        name: 'Kakaos csiga',
-        url: 'https://www.kifli.hu/termek/kakaos-csiga',
-        price: '599',
+        productId: 76368,
+        productName: 'Kinder tejszelet',
+        baseLink: '76368-kinder-tejszelet',
+        price: { full: 229, currency: 'Ft' },
+      },
+      {
+        productId: 97506,
+        productName: 'Miil ESL teljes tej',
+        link: '?productPopup=97506-miil-esl-teljes-tej',
       },
     ],
+  },
+};
+
+const productPayload = [
+  {
+    id: 97506,
+    name: 'Miil ESL teljes tej 3,5% zsírtartalommal',
+    slug: '97506-miil-esl-teljes-tej-3-5-zsirtartalommal',
+    unit: 'l',
+    textualAmount: '1 l',
+    brand: 'Miil',
+    images: ['https://cdn.kifli.hu/images/grocery/products/97506.jpg'],
+    countries: [{ name: 'EU' }],
+    productStory: 'Friss ESL tej.',
+  },
+];
+
+const pricesPayload = [
+  {
+    productId: 97506,
+    price: { amount: 529, currency: 'HUF' },
+  },
+];
+
+const categoriesPayload = [
+  {
+    productId: 97506,
+    categories: [
+      { name: 'Friss, féltartós, ESL tej', level: 2 },
+      { name: 'Tejtermék és tojás', level: 0 },
+      { name: 'Tej és tej alapú ital', level: 1 },
+    ],
+  },
+];
+
+test('build API URLs encode Kifli values', () => {
+  assert.equal(
+    buildSearchApiUrl('kakaos csiga'),
+    'https://www.kifli.hu/services/frontend-service/search?query=kakaos+csiga&offset=0&limit=24',
   );
+  assert.equal(
+    buildProductApiUrl('97506'),
+    'https://www.kifli.hu/api/v1/products?products=97506',
+  );
+  assert.equal(
+    buildProductPricesApiUrl('97506'),
+    'https://www.kifli.hu/api/v1/products/prices?products=97506',
+  );
+  assert.equal(
+    buildProductCategoriesApiUrl('97506'),
+    'https://www.kifli.hu/api/v1/products/categories?products=97506',
+  );
+  assert.equal(absoluteKifliUrl('/x'), 'https://www.kifli.hu/x');
 });
 
-test('extractProductSummaries falls back to product links', () => {
-  const html = `<a href="/termek/ABC99" data-sku="ABC99"><span> Alma &amp; korte </span></a>`;
-  assert.deepEqual(extractProductSummaries(html), [
+test('extractProductSummariesFromSearchResponse reads Kifli frontend search data', () => {
+  assert.deepEqual(extractProductSummariesFromSearchResponse(searchPayload), [
     {
-      id: 'ABC99',
-      name: 'Alma & korte',
-      url: 'https://www.kifli.hu/termek/ABC99',
+      id: '76368',
+      name: 'Kinder tejszelet',
+      url: 'https://www.kifli.hu/?productPopup=76368-kinder-tejszelet',
+      price: '229 Ft',
+    },
+    {
+      id: '97506',
+      name: 'Miil ESL teljes tej',
+      url: 'https://www.kifli.hu/?productPopup=97506-miil-esl-teljes-tej',
+      price: undefined,
     },
   ]);
+  assert.deepEqual(extractProductSummariesFromSearchResponse({}), []);
 });
 
-test('extractProductDetails reads product fields and fallback attributes', () => {
+test('extractProductDetailsFromApiResponses reads product, price, and category data', () => {
   assert.deepEqual(
-    extractProductDetails(
-      `<script type="application/ld+json">${productJson}</script>`,
-      'SKU123',
+    extractProductDetailsFromApiResponses(
+      productPayload,
+      pricesPayload,
+      categoriesPayload,
+      '97506',
     ),
     {
-      id: 'SKU123',
-      name: 'Kakaos csiga',
-      url: 'https://www.kifli.hu/termek/kakaos-csiga',
-      price: '599',
-      description: 'Friss pekaru',
-      brand: 'Kifli',
-      image: '/image.jpg',
+      id: '97506',
+      name: 'Miil ESL teljes tej 3,5% zsírtartalommal',
+      url: 'https://www.kifli.hu/?productPopup=97506-miil-esl-teljes-tej-3-5-zsirtartalommal',
+      price: '529 HUF',
+      description: 'Friss ESL tej.',
+      brand: 'Miil',
+      image: 'https://cdn.kifli.hu/images/grocery/products/97506.jpg',
+      attributes: {
+        unit: 'l',
+        amount: '1 l',
+        country: 'EU',
+        categories:
+          'Tejtermék és tojás > Tej és tej alapú ital > Friss, féltartós, ESL tej',
+      },
+    },
+  );
+  assert.deepEqual(
+    extractProductDetailsFromApiResponses([], [], [], 'missing'),
+    {
+      id: 'missing',
+      name: 'missing',
       attributes: {},
     },
   );
-  assert.deepEqual(
-    extractProductDetails('<dt>Szarm.</dt><dd>HU</dd>', 'NOJSON'),
-    {
-      id: 'NOJSON',
-      name: 'NOJSON',
-      attributes: { 'Szarm.': 'HU' },
-    },
-  );
 });
 
-test('searchKifli uses the browser boundary', async () => {
+test('searchKifli fetches the direct search API', async () => {
   const calls: string[] = [];
-  const result = await searchKifli('tej', async () =>
-    fakeBrowser(
-      calls,
-      `<script type="application/ld+json">${productJson}</script>`,
-    ),
-  );
-  assert.equal(calls[0], 'https://www.kifli.hu/kereses?q=tej');
-  assert.equal(calls.at(-1), 'close');
-  assert.equal(result[0].id, 'SKU123');
-});
-
-test('getKifliProductDetails resolves IDs through search results', async () => {
-  const html = [
-    '<a href="/termek/SKU123" data-sku="SKU123">Kakaos csiga</a>',
-    `<script type="application/ld+json">${productJson}</script>`,
-  ];
-  const calls: string[] = [];
-  const result = await getKifliProductDetails('SKU123', async () =>
-    fakeBrowser(calls, html),
-  );
-  assert.deepEqual(calls.slice(0, 2), [
-    'https://www.kifli.hu/kereses?q=SKU123',
-    'https://www.kifli.hu/termek/SKU123',
+  const result = await searchKifli('tej', async (url) => {
+    calls.push(url);
+    return searchPayload;
+  });
+  assert.deepEqual(calls, [
+    'https://www.kifli.hu/services/frontend-service/search?query=tej&offset=0&limit=24',
   ]);
-  assert.equal(result.name, 'Kakaos csiga');
+  assert.equal(result[0].id, '76368');
 });
 
-test('getKifliProductDetails accepts direct URLs', async () => {
+test('getKifliProductDetails fetches direct detail APIs for numeric IDs', async () => {
   const calls: string[] = [];
-  await getKifliProductDetails('https://www.kifli.hu/termek/SKU123', async () =>
-    fakeBrowser(calls, productJson),
-  );
-  assert.equal(calls[0], 'https://www.kifli.hu/termek/SKU123');
+  const result = await getKifliProductDetails('97506', fakeFetcher(calls));
+  assert.deepEqual(calls, [
+    'https://www.kifli.hu/api/v1/products?products=97506',
+    'https://www.kifli.hu/api/v1/products/prices?products=97506',
+    'https://www.kifli.hu/api/v1/products/categories?products=97506',
+  ]);
+  assert.equal(result.name, 'Miil ESL teljes tej 3,5% zsírtartalommal');
 });
 
-function fakeBrowser(calls: string[], html: string | string[]): Browser {
-  const pages = Array.isArray(html) ? html : [html];
-  return {
-    async newPage() {
-      return {
-        async setExtraHTTPHeaders(headers) {
-          calls.push(`headers:${JSON.stringify(headers)}`);
-        },
-        async goto(url) {
-          calls.push(url);
-        },
-        async content() {
-          const next = pages.shift() ?? '';
-          return next.includes('<')
-            ? next
-            : `<script type="application/ld+json">${next}</script>`;
-        },
-      };
-    },
-    async close() {
-      calls.push('close');
-    },
+test('getKifliProductDetails resolves productPopup URLs and search terms', async () => {
+  const urlCalls: string[] = [];
+  await getKifliProductDetails(
+    'https://www.kifli.hu/?productPopup=97506-miil-esl-teljes-tej',
+    fakeFetcher(urlCalls),
+  );
+  assert.equal(
+    urlCalls[0],
+    'https://www.kifli.hu/api/v1/products?products=97506',
+  );
+
+  const queryCalls: string[] = [];
+  await getKifliProductDetails('tej', fakeFetcher(queryCalls));
+  assert.deepEqual(queryCalls, [
+    'https://www.kifli.hu/services/frontend-service/search?query=tej&offset=0&limit=24',
+    'https://www.kifli.hu/api/v1/products?products=76368',
+    'https://www.kifli.hu/api/v1/products/prices?products=76368',
+    'https://www.kifli.hu/api/v1/products/categories?products=76368',
+  ]);
+});
+
+function fakeFetcher(calls: string[]) {
+  return async (url: string): Promise<unknown> => {
+    calls.push(url);
+    if (url.includes('/services/frontend-service/search')) return searchPayload;
+    if (url.includes('/api/v1/products/prices')) return pricesPayload;
+    if (url.includes('/api/v1/products/categories')) return categoriesPayload;
+    return productPayload;
   };
 }

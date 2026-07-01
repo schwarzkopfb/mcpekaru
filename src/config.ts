@@ -1,7 +1,6 @@
 import type { Config } from './types.ts';
 
 const defaults: Config = {
-  browserTimeoutMs: 30_000,
   kifliOrigin: 'https://www.kifli.hu',
   port: 8787,
   protocolVersion: '2025-03-26',
@@ -11,10 +10,6 @@ const defaults: Config = {
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   return {
-    browserTimeoutMs: numberFromEnv(
-      env.BROWSER_TIMEOUT_MS,
-      defaults.browserTimeoutMs,
-    ),
     kifliOrigin: env.KIFLI_ORIGIN ?? defaults.kifliOrigin,
     port: numberFromEnv(env.PORT, defaults.port),
     protocolVersion: env.MCP_PROTOCOL_VERSION ?? defaults.protocolVersion,
