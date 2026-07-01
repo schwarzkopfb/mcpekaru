@@ -34,7 +34,7 @@ const productPayload = [
   {
     id: 97506,
     name: 'Miil ESL teljes tej 3,5% zsírtartalommal',
-    slug: '97506-miil-esl-teljes-tej-3-5-zsirtartalommal',
+    slug: 'miil-esl-teljes-tej-3-5-zsirtartalommal',
     unit: 'l',
     textualAmount: '1 l',
     brand: 'Miil',

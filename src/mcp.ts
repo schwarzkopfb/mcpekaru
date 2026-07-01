@@ -19,6 +19,34 @@ export async function handleMcpRequest(
   return fail(id, -32601, `Unknown method: ${request.method}`);
 }
 
+const productSummarySchema = {
+  type: 'object',
+  required: ['id', 'name'],
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    url: { type: 'string' },
+    price: { type: 'string' },
+  },
+  additionalProperties: false,
+};
+
+const productDetailsSchema = {
+  type: 'object',
+  required: ['id', 'name', 'attributes'],
+  properties: {
+    ...productSummarySchema.properties,
+    description: { type: 'string' },
+    brand: { type: 'string' },
+    image: { type: 'string' },
+    attributes: {
+      type: 'object',
+      additionalProperties: { type: 'string' },
+    },
+  },
+  additionalProperties: false,
+};
+
 const tools = [
   {
     name: 'kifli.search',
@@ -28,6 +56,17 @@ const tools = [
       type: 'object',
       required: ['query'],
       properties: { query: { type: 'string' } },
+    },
+    outputSchema: {
+      type: 'object',
+      required: ['products'],
+      properties: {
+        products: {
+          type: 'array',
+          items: productSummarySchema,
+        },
+      },
+      additionalProperties: false,
     },
   },
   {
@@ -39,6 +78,7 @@ const tools = [
       required: ['id'],
       properties: { id: { type: 'string' } },
     },
+    outputSchema: productDetailsSchema,
   },
 ];
 
@@ -51,21 +91,16 @@ async function callTool(
     return fail(id, -32602, 'Tool name is required');
   const args = isRecord(params.arguments) ? params.arguments : {};
   if (params.name === 'kifli.search')
-    return ok(
+    return searchToolResult(
       id,
-      toolResult(
-        await (deps.search ?? searchKifli)(requiredString(args.query, 'query')),
-      ),
+      await (deps.search ?? searchKifli)(requiredString(args.query, 'query')),
     );
-  if (params.name === 'kifli.productDetails')
-    return ok(
-      id,
-      toolResult(
-        await (deps.details ?? getKifliProductDetails)(
-          requiredString(args.id, 'id'),
-        ),
-      ),
+  if (params.name === 'kifli.productDetails') {
+    const details = await (deps.details ?? getKifliProductDetails)(
+      requiredString(args.id, 'id'),
     );
+    return ok(id, toolResult(details, details));
+  }
   return fail(id, -32602, `Unknown tool: ${params.name}`);
 }
 
@@ -77,8 +112,18 @@ function serverInfo(): unknown {
   };
 }
 
-function toolResult(value: unknown): unknown {
-  return { content: [{ type: 'text', text: JSON.stringify(value) }] };
+function searchToolResult(
+  id: string | number | null,
+  products: unknown,
+): JsonRpcResponse {
+  return ok(id, toolResult(products, { products }));
+}
+
+function toolResult(value: unknown, structuredContent: unknown): unknown {
+  return {
+    content: [{ type: 'text', text: JSON.stringify(value) }],
+    structuredContent,
+  };
 }
 
 function requiredString(value: unknown, name: string): string {

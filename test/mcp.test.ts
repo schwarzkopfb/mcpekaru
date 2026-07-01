@@ -18,7 +18,19 @@ test('handleMcpRequest initializes and lists tools', async () => {
     id: 2,
     method: 'tools/list',
   });
-  assert.equal((list?.result as { tools: unknown[] }).tools.length, 2);
+  const tools = (list?.result as { tools: any[] }).tools;
+  assert.equal(tools.length, 2);
+  assert.deepEqual(tools[0].outputSchema.required, ['products']);
+  assert.equal(tools[0].outputSchema.properties.products.type, 'array');
+  assert.deepEqual(tools[1].outputSchema.required, [
+    'id',
+    'name',
+    'attributes',
+  ]);
+  assert.equal(
+    tools[1].outputSchema.properties.attributes.additionalProperties.type,
+    'string',
+  );
 });
 
 test('handleMcpRequest dispatches Kifli tools', async () => {
@@ -39,6 +51,9 @@ test('handleMcpRequest dispatches Kifli tools', async () => {
     JSON.parse((search?.result as any).content[0].text)[0].id,
     'tej',
   );
+  assert.deepEqual((search?.result as any).structuredContent, {
+    products: [{ id: 'tej', name: 'Tej' }],
+  });
 
   const details = await handleMcpRequest(
     {
@@ -54,6 +69,11 @@ test('handleMcpRequest dispatches Kifli tools', async () => {
     },
   );
   assert.equal(JSON.parse((details?.result as any).content[0].text).id, 'SKU');
+  assert.deepEqual((details?.result as any).structuredContent, {
+    id: 'SKU',
+    name: 'Tej',
+    attributes: {},
+  });
 });
 
 test('handleMcpRequest reports protocol errors', async () => {

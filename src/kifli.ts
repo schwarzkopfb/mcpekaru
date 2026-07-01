@@ -75,7 +75,7 @@ export function extractProductDetailsFromApiResponses(
   return {
     id,
     name: stringValue(product.name) || id,
-    url: productUrl(stringValue(product.slug)),
+    url: productUrl(id, stringValue(product.slug)),
     price,
     description: stringValue(product.productStory) || undefined,
     brand: brandName(product.brand),
@@ -125,7 +125,7 @@ function productSummaryFromSearchProduct(
   return {
     id,
     name: stringValue(product.productName) || stringValue(product.name),
-    url: productUrl(baseLink || productPopupSlug(link)),
+    url: productUrl(id, baseLink || productPopupValue(link)),
     price: priceFromSearchProduct(product.price),
   };
 }
@@ -164,14 +164,24 @@ function priceFromProductPricesPayload(
   return [amount, currency].filter(Boolean).join(' ') || undefined;
 }
 
-function productUrl(slug: string): string | undefined {
-  return slug
-    ? absoluteKifliUrl(`/?productPopup=${encodeURIComponent(slug)}`)
+function productUrl(id: string, value: string): string | undefined {
+  const popupValue = canonicalProductPopupValue(id, value);
+  return popupValue
+    ? absoluteKifliUrl(`/?productPopup=${encodeURIComponent(popupValue)}`)
     : undefined;
 }
 
-function productPopupSlug(link: string): string {
-  return /[?&]productPopup=([^&]+)/i.exec(link)?.[1] ?? '';
+function canonicalProductPopupValue(id: string, value: string): string {
+  if (!id || !value || value.startsWith(`${id}-`)) return value;
+  return `${id}-${value}`;
+}
+
+function productPopupValue(link: string): string {
+  if (!link) return '';
+  const value = new URL(link, config.kifliOrigin).searchParams.get(
+    'productPopup',
+  );
+  return value ?? '';
 }
 
 function productListFromSearchPayload(
