@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { handleMcpRequest } from '../src/mcp.ts';
+import { handleMcpRequest } from '../src/mcp';
 
 test('handleMcpRequest initializes and lists tools', async () => {
   const init = await handleMcpRequest({

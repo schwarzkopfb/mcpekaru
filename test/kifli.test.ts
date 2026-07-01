@@ -10,7 +10,7 @@ import {
   extractProductSummariesFromSearchResponse,
   getKifliProductDetails,
   searchKifli,
-} from '../src/kifli.ts';
+} from '../src/kifli';
 
 const searchPayload = {
   data: {

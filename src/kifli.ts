@@ -1,5 +1,5 @@
-import { config } from './config.ts';
-import type { JsonFetcher, ProductDetails, ProductSummary } from './types.ts';
+import { config } from './config';
+import type { JsonFetcher, ProductDetails, ProductSummary } from './types';
 
 export function buildSearchApiUrl(query: string): string {
   const params = new URLSearchParams({

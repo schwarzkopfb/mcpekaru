@@ -1,5 +1,5 @@
-import { config } from './config.ts';
-import { getKifliProductDetails, searchKifli } from './kifli.ts';
+import { config } from './config';
+import { getKifliProductDetails, searchKifli } from './kifli';
 import type {
   JsonRpcRequest,
   JsonRpcResponse,

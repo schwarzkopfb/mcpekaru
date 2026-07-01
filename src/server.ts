@@ -6,10 +6,10 @@ import {
   type ServerResponse,
   createServer,
 } from 'node:http';
-import { config } from './config.ts';
-import { handleMcpRequest } from './mcp.ts';
-import { open, send } from './sse.ts';
-import type { JsonRpcRequest, McpDependencies, Session } from './types.ts';
+import { config } from './config';
+import { handleMcpRequest } from './mcp';
+import { open, send } from './sse';
+import type { JsonRpcRequest, McpDependencies, Session } from './types';
 
 export function createMcpHttpServer(deps: McpDependencies = {}): Server {
   return createServer(createMcpRequestHandler(deps));
