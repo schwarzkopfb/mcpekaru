@@ -11,56 +11,10 @@ import {
   getKifliProductDetails,
   searchKifli,
 } from '../src/kifli';
-
-const searchPayload = {
-  data: {
-    productList: [
-      {
-        productId: 76368,
-        productName: 'Kinder tejszelet',
-        baseLink: '76368-kinder-tejszelet',
-        price: { full: 229, currency: 'Ft' },
-      },
-      {
-        productId: 97506,
-        productName: 'Miil ESL teljes tej',
-        link: '?productPopup=97506-miil-esl-teljes-tej',
-      },
-    ],
-  },
-};
-
-const productPayload = [
-  {
-    id: 97506,
-    name: 'Miil ESL teljes tej 3,5% zsírtartalommal',
-    slug: 'miil-esl-teljes-tej-3-5-zsirtartalommal',
-    unit: 'l',
-    textualAmount: '1 l',
-    brand: 'Miil',
-    images: ['https://cdn.kifli.hu/images/grocery/products/97506.jpg'],
-    countries: [{ name: 'EU' }],
-    productStory: 'Friss ESL tej.',
-  },
-];
-
-const pricesPayload = [
-  {
-    productId: 97506,
-    price: { amount: 529, currency: 'HUF' },
-  },
-];
-
-const categoriesPayload = [
-  {
-    productId: 97506,
-    categories: [
-      { name: 'Friss, féltartós, ESL tej', level: 2 },
-      { name: 'Tejtermék és tojás', level: 0 },
-      { name: 'Tej és tej alapú ital', level: 1 },
-    ],
-  },
-];
+import categoriesPayload from './fixtures/kifli_categories_payload.json' with { type: 'json' };
+import pricesPayload from './fixtures/kifli_prices_payload.json' with { type: 'json' };
+import productPayload from './fixtures/kifli_product_payload.json' with { type: 'json' };
+import searchPayload from './fixtures/kifli_search_payload.json' with { type: 'json' };
 
 test('build API URLs encode Kifli values', () => {
   assert.equal(

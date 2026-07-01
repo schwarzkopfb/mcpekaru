@@ -1,0 +1,17 @@
+{
+  "data": {
+    "productList": [
+      {
+        "productId": 76368,
+        "productName": "Kinder tejszelet",
+        "baseLink": "76368-kinder-tejszelet",
+        "price": { "full": 229, "currency": "Ft" }
+      },
+      {
+        "productId": 97506,
+        "productName": "Miil ESL teljes tej",
+        "link": "?productPopup=97506-miil-esl-teljes-tej"
+      }
+    ]
+  }
+}

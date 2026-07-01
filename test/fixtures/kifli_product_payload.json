@@ -1,0 +1,13 @@
+[
+  {
+    "id": 97506,
+    "name": "Miil ESL teljes tej 3,5% zsírtartalommal",
+    "slug": "miil-esl-teljes-tej-3-5-zsirtartalommal",
+    "unit": "l",
+    "textualAmount": "1 l",
+    "brand": "Miil",
+    "images": ["https://cdn.kifli.hu/images/grocery/products/97506.jpg"],
+    "countries": [{ "name": "EU" }],
+    "productStory": "Friss ESL tej."
+  }
+]
