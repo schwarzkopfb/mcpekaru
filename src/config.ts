@@ -1,4 +1,4 @@
-import type { Config } from './types';
+import type { Config } from './types.ts';
 
 const defaults: Config = {
   kifliOrigin: 'https://www.kifli.hu',

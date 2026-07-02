@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { encode, open, send } from '../src/sse';
+import { encode, open, send } from '../src/sse.ts';
 
 test('encode formats string and JSON events', () => {
   assert.equal(

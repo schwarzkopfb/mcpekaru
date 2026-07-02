@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { Readable } from 'node:stream';
 import { test } from 'node:test';
-import { createMcpRequestHandler } from '../src/server';
+import { createMcpRequestHandler } from '../src/server.ts';
 
 test('HTTP handler supports rpc, sse messages, and 404s', async () => {
   const handler = createMcpRequestHandler({

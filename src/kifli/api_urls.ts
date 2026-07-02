@@ -1,4 +1,4 @@
-import { config } from '../config';
+import { config } from '../config.ts';
 
 export function buildSearchApiUrl(query: string): string {
   const params = new URLSearchParams({

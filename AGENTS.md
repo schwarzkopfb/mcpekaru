@@ -57,6 +57,8 @@ Follow YAGNI: implement only current MCP commands and extraction. Prefer Node co
 
 Format every file with Prettier. Use `camelCase` for variables/functions, `PascalCase` for types/classes, and `snake_case` for files. Keep TypeScript strict at public boundaries.
 
+Use explicit `.ts` extensions for all local TypeScript imports and re-exports. This matches Node's built-in type stripping behavior; `tsconfig.json` enables `allowImportingTsExtensions` so the TypeScript checker accepts the same specifiers.
+
 ## MCP & Kifli Behavior
 
 Expose MCP commands for Kifli product search and product detail lookup. Search should call Kifli's data APIs, extract results, and include a stable SKU/product ID. Detail lookup accepts that ID or a Kifli product URL, fetches direct product data, and streams results over SSE.
