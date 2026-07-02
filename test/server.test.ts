@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Readable } from 'node:stream';
 import { test } from 'node:test';
 import { createMcpRequestHandler } from '../src/server.ts';
@@ -16,7 +17,8 @@ test('HTTP handler supports rpc, sse messages, and 404s', async () => {
     body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
   });
   assert.equal(rpc.status, 200);
-  assert.equal(rpc.json.result.tools.length, 2);
+  const rpcJson = rpc.json as { result: { tools: unknown[] } };
+  assert.equal(rpcJson.result.tools.length, 2);
 
   const missing = await request(handler, { url: '/missing' });
   assert.equal(missing.status, 404);
@@ -59,7 +61,9 @@ async function request(
   handler: ReturnType<typeof createMcpRequestHandler>,
   options: { url: string; method?: string; body?: string },
 ) {
-  const req = Readable.from(options.body ? [options.body] : []) as any;
+  const req = Readable.from(
+    options.body ? [options.body] : [],
+  ) as IncomingMessage;
   req.method = options.method ?? 'GET';
   req.url = options.url;
   const response = {
@@ -81,9 +85,9 @@ async function request(
       return this;
     },
   };
-  await handler(req, response as any);
+  await handler(req, response as unknown as ServerResponse);
   return {
     ...response,
-    json: response.body ? JSON.parse(response.body) : undefined,
+    json: response.body ? (JSON.parse(response.body) as unknown) : undefined,
   };
 }

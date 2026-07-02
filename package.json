@@ -7,7 +7,8 @@
     "start": "nub src/server.ts",
     "dev": "nub --watch src/server.ts",
     "test": "nub --test --experimental-test-coverage --test-coverage-include=src/**/*.ts --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 test/*.test.ts",
-    "check": "nub --experimental-strip-types --check src/server.ts",
+    "check": "tsc --noEmit",
+    "lint": "eslint src test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -17,6 +18,9 @@
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/node": "^26.1.0",
-    "prettier": "^3.9.4"
+    "eslint": "^10.6.0",
+    "prettier": "^3.9.4",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.62.1"
   }
 }

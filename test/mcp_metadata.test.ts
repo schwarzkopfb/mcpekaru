@@ -2,6 +2,18 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { handleMcpRequest } from '../src/mcp.ts';
 
+type JsonSchema = {
+  type?: string;
+  required?: string[];
+  properties: Record<string, JsonSchema>;
+  additionalProperties?: JsonSchema | false;
+  items?: JsonSchema;
+};
+
+type ToolMetadata = {
+  outputSchema: JsonSchema;
+};
+
 test('handleMcpRequest initializes and lists tools', async () => {
   const init = await handleMcpRequest({
     jsonrpc: '2.0',
@@ -18,7 +30,7 @@ test('handleMcpRequest initializes and lists tools', async () => {
     id: 2,
     method: 'tools/list',
   });
-  const tools = (list?.result as { tools: any[] }).tools;
+  const tools = (list?.result as { tools: ToolMetadata[] }).tools;
   assert.equal(tools.length, 2);
   assert.deepEqual(tools[0].outputSchema.required, ['products']);
   assert.equal(tools[0].outputSchema.properties.products.type, 'array');
@@ -27,8 +39,9 @@ test('handleMcpRequest initializes and lists tools', async () => {
     'name',
     'attributes',
   ]);
-  assert.equal(
-    tools[1].outputSchema.properties.attributes.additionalProperties.type,
-    'string',
-  );
+  const attributeAdditionalProperties =
+    tools[1].outputSchema.properties.attributes.additionalProperties;
+  assert.ok(attributeAdditionalProperties);
+  assert.notEqual(attributeAdditionalProperties, false);
+  assert.equal(attributeAdditionalProperties.type, 'string');
 });

@@ -1,6 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { handleMcpRequest } from '../src/mcp.ts';
+import type { ProductDetails, ProductSummary } from '../src/types.ts';
+
+type TextContent = {
+  text: string;
+  type: 'text';
+};
+
+type ToolCallResult = {
+  content: TextContent[];
+  structuredContent: unknown;
+};
 
 test('handleMcpRequest dispatches Kifli tools', async () => {
   const search = await handleMcpRequest(
@@ -16,11 +27,12 @@ test('handleMcpRequest dispatches Kifli tools', async () => {
       },
     },
   );
-  assert.equal(
-    JSON.parse((search?.result as any).content[0].text)[0].id,
-    'tej',
-  );
-  assert.deepEqual((search?.result as any).structuredContent, {
+  const searchResult = search?.result as ToolCallResult;
+  const searchText = JSON.parse(
+    searchResult.content[0].text,
+  ) as ProductSummary[];
+  assert.equal(searchText[0].id, 'tej');
+  assert.deepEqual(searchResult.structuredContent, {
     products: [{ id: 'tej', name: 'Tej' }],
   });
 
@@ -37,8 +49,12 @@ test('handleMcpRequest dispatches Kifli tools', async () => {
       },
     },
   );
-  assert.equal(JSON.parse((details?.result as any).content[0].text).id, 'SKU');
-  assert.deepEqual((details?.result as any).structuredContent, {
+  const detailsResult = details?.result as ToolCallResult;
+  const detailsText = JSON.parse(
+    detailsResult.content[0].text,
+  ) as ProductDetails;
+  assert.equal(detailsText.id, 'SKU');
+  assert.deepEqual(detailsResult.structuredContent, {
     id: 'SKU',
     name: 'Tej',
     attributes: {},

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import type { ServerResponse } from 'node:http';
 import { test } from 'node:test';
 import { encode, open, send } from '../src/sse.ts';
 
@@ -23,7 +24,7 @@ test('open and send write response data', () => {
     write(value: string) {
       writes.push(value);
     },
-  } as any;
+  } as unknown as ServerResponse;
   open(res);
   send(res, 'message', { id: 1 });
   assert.equal(headers[0], 200);
