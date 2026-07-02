@@ -1,6 +1,6 @@
 {
-    "compilerOptions": {
-        "types": ["node"],
-        "module": "esnext"
-    }
+  "compilerOptions": {
+    "types": ["node"],
+    "module": "esnext"
+  }
 }

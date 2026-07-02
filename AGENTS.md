@@ -5,14 +5,21 @@
 This is a minimal Node.js/TypeScript MCP server that streams model responses over SSE. Put source in `src/` and tests in `test/`.
 
 ```text
-src/          MCP server, SSE transport, config, types, Kifli scraping
+src/          MCP server, SSE transport, config, types, feature folders
+src/kifli/    Kifli API URLs, fetching, product URLs, search and detail parsing
+src/mcp/      MCP request handling, tool metadata, schemas, tool calls
+src/shared/   Small non-domain helpers shared across feature folders
 test/         Node.js built-in test files
 docs/adr/     Architectural Decision Records
 package.json  nub scripts and dependency declarations
 lock.yaml     nub lockfile
 ```
 
-Keep modules small: isolate MCP registration, SSE, Kifli search scraping, and product-detail extraction. Put shared types in `src/types.ts`; do not define reusable exported types in feature modules. Read config through `src/config.ts`, which loads env vars first, then defaults.
+Keep modules small and feature-scoped: isolate MCP registration, tool execution, SSE, Kifli API URL construction, Kifli fetching, search extraction, and product-detail extraction. Use subfolders inside `src/` whenever a top-level module would mix multiple responsibilities. Keep stable top-level entrypoints such as `src/kifli.ts` and `src/mcp.ts` as thin re-export modules when useful for imports.
+
+Prefer files under 100 source lines of code. If a file exceeds that target, it should contain exactly one cohesive object, class, function, or schema; otherwise split it into smaller responsibility-focused modules before adding more behavior. When a single large object is unavoidable, consider whether an ADR or a more explicit architecture would make ownership clearer.
+
+Put shared types in `src/types.ts`; do not define reusable exported types in feature modules. Read config through `src/config.ts`, which loads env vars first, then defaults.
 
 ## Architectural Decision Records
 
