@@ -73,7 +73,28 @@ Test names should describe behavior, for example `search-extracts-product-ids.te
 
 ## Commit & Pull Request Guidelines
 
-No Git history is available, so use short imperative commit subjects such as `Add Kifli search command`. Keep commits focused.
+Follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/)
+standard for every commit. Keep commits small, focused, and expressive.
+
+Write the subject in this form:
+
+```text
+<type>[optional scope][optional !]: <description>
+```
+
+- Select the appropriate Conventional Commits type, such as `feat`, `fix`,
+  `docs`, `refactor`, `test`, or `chore`.
+- Keep the entire subject line to 50 characters or fewer.
+- Write the description in lowercase and in the imperative mood. It should
+  complete the sentence "This commit will ...", for example,
+  `feat: implement advanced result filtering`.
+- Do not end the subject with a period.
+- Use the specification's `!` marker or `BREAKING CHANGE:` footer for breaking
+  changes.
+
+Separate the subject from the body with a blank line. The body must contain a
+short list of the significant changes in the commit and explain what changed
+and why. Wrap body lines at 72 characters.
 
 Pull requests should include the MCP commands changed, verification commands, coverage result, and notes for any Kifli API response shape changes.
 
