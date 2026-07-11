@@ -2,10 +2,12 @@
 
 ## Project Structure & Module Organization
 
-This is a minimal Node.js/TypeScript MCP server that streams model responses over SSE. Put source in `src/` and tests in `test/`.
+This is a minimal Node.js/TypeScript MCP server for ChatGPT, deployed on Deno Deploy. It uses Streamable HTTP and Auth0 OAuth. Put source in `src/` and tests in `test/`.
 
 ```text
-src/          MCP server, SSE transport, config, types, feature folders
+src/          MCP server, config, shared types, and feature folders
+src/auth/     Auth0 token verification and OAuth resource metadata
+src/http/     Small HTTP body and response helpers
 src/kifli/    Kifli API URLs, fetching, product URLs, search and detail parsing
 src/mcp/      MCP request handling, tool metadata, schemas, tool calls
 src/shared/   Small non-domain helpers shared across feature folders
@@ -15,9 +17,11 @@ package.json  nub scripts and dependency declarations
 lock.yaml     nub lockfile
 ```
 
-Keep modules small and feature-scoped: isolate MCP registration, tool execution, SSE, Kifli API URL construction, Kifli fetching, search extraction, and product-detail extraction. Use subfolders inside `src/` whenever a top-level module would mix multiple responsibilities. Keep stable top-level entrypoints such as `src/kifli.ts` and `src/mcp.ts` as thin re-export modules when useful for imports.
+Keep modules small, atomic, and feature-scoped: isolate authentication, HTTP transport, MCP registration, tool execution, Kifli API URL construction, fetching, search extraction, and product-detail extraction. Use subfolders inside `src/` whenever a top-level module would mix multiple responsibilities. Keep stable top-level entrypoints such as `src/kifli.ts` and `src/mcp.ts` as thin re-export modules when useful for imports.
 
 Prefer files under 100 source lines of code. If a file exceeds that target, it should contain exactly one cohesive object, class, function, or schema; otherwise split it into smaller responsibility-focused modules before adding more behavior. When a single large object is unavoidable, consider whether an ADR or a more explicit architecture would make ownership clearer.
+
+Use short, expressive names. Avoid enterprise-style names, redundant suffixes, and abstractions that only rename one operation. Prefer a small function or module with one obvious purpose over manager, service, provider, factory, or orchestration layers.
 
 Put shared types in `src/types.ts`; do not define reusable exported types in feature modules. Read config through `src/config.ts`, which loads env vars first, then defaults.
 
@@ -40,12 +44,13 @@ Keep ADRs concise and concrete. Record the decision and its project-specific tra
 
 ## Build, Test, and Development Commands
 
-Use latest Node.js with TypeScript through `nub.js`. Do not require `npm` or separate `tsc` precompile.
+Use latest Node.js with TypeScript through `nub.js` as the primary project tool. Deno is a deployment target running the Node-compatible application, not a second task system. Keep every task in `package.json` so `nub run <task>` is authoritative and `deno task <task>` can reuse it. Do not add `deno.json`, require `npm`, or add a separate TypeScript precompile.
 
 ```sh
 nub run dev    # Run the local MCP server
 nub run test   # Run node:test with 100% coverage thresholds
 nub run check  # Syntax-check TypeScript without emitting output
+nub run deno:check # Verify the Deno deployment target
 nub run format # Format all files with Prettier
 ```
 
@@ -61,7 +66,7 @@ Use explicit `.ts` extensions for all local TypeScript imports and re-exports. T
 
 ## MCP & Kifli Behavior
 
-Expose MCP commands for Kifli product search and product detail lookup. Search should call Kifli's data APIs, extract results, and include a stable SKU/product ID. Detail lookup accepts that ID or a Kifli product URL, fetches direct product data, and streams results over SSE.
+Expose MCP commands for Kifli product search and product detail lookup. Search should call Kifli's data APIs, extract results, and include a stable SKU/product ID. Detail lookup accepts that ID or a Kifli product URL and fetches direct product data. Expose only the authenticated Streamable HTTP endpoint at `POST /mcp` and OAuth protected-resource metadata. Do not restore legacy `/sse`, `/messages`, or `/rpc` endpoints.
 
 Return minimal, model-friendly JSON. Avoid raw HTML unless needed for debugging.
 
@@ -73,31 +78,77 @@ Test names should describe behavior, for example `search-extracts-product-ids.te
 
 ## Commit & Pull Request Guidelines
 
-Follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/)
+Follow the Conventional Commits 1.0.0
 standard for every commit. Keep commits small, focused, and expressive.
 
 Write the subject in this form:
 
-```text
 <type>[optional scope][optional !]: <description>
-```
 
-- Select the appropriate Conventional Commits type, such as `feat`, `fix`,
-  `docs`, `refactor`, `test`, or `chore`.
+- Select the appropriate Conventional Commits type, such as feat, fix,
+  docs, refactor, test, or chore.
 - Keep the entire subject line to 50 characters or fewer.
 - Write the description in lowercase and in the imperative mood. It should
-  complete the sentence "This commit will ...", for example,
-  `feat: implement advanced result filtering`.
+  complete the sentence “This commit will …”, for example,
+  feat: implement advanced result filtering.
 - Do not end the subject with a period.
-- Use the specification's `!` marker or `BREAKING CHANGE:` footer for breaking
+- Use the specification’s ! marker or BREAKING CHANGE: footer for breaking
   changes.
 
 Separate the subject from the body with a blank line. The body must contain a
 short list of the significant changes in the commit and explain what changed
 and why. Wrap body lines at 72 characters.
 
-Pull requests should include the MCP commands changed, verification commands, coverage result, and notes for any Kifli API response shape changes.
+### Development session modes
+
+This repository supports two development session modes:
+
+- physical – commit signing is available.
+- remote – commit signing is temporarily unavailable, but local version
+  control is still desired during development.
+
+The current mode is stored in the repository-local Git configuration:
+
+git config --get development.sessionMode
+
+Before creating any commit, agents must check the current mode.
+
+#### Physical mode
+
+When the mode is physical:
+
+- Create commits normally:
+
+git commit
+
+- Commits are expected to be cryptographically signed.
+- Pushing is permitted after the normal verification process.
+
+#### Remote mode
+
+When the mode is remote:
+
+- Never create commits using git commit.
+- Create commits using:
+
+git remote-commit
+
+- git remote-commit intentionally creates unsigned local commits for
+  development purposes.
+- These commits are considered temporary and must not be pushed or otherwise
+  published.
+- Do not disable or modify the repository’s signing configuration.
+- Do not bypass any local or remote verification mechanisms.
+
+Before publishing work created in remote mode, all unpublished commits must be
+rewritten as signed commits using the project’s signing workflow. Only after
+that may the branch be pushed.
+
+Pull requests should include the MCP commands changed, verification commands,
+coverage result, and notes for any Kifli API response shape changes.
 
 ## Security & Configuration Tips
 
 Do not commit secrets or local `.env` files. Keep Kifli requests polite and avoid unnecessary API calls.
+
+Verify Auth0 access-token signatures, issuer, audience, expiry, activation time, and scope on every MCP request. Keep authentication configuration in environment variables and never log bearer tokens.

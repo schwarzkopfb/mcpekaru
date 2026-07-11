@@ -1,7 +1,7 @@
 import { getKifliProductDetails, searchKifli } from '../kifli.ts';
 import { isRecord } from '../shared/values.ts';
 import type { JsonRpcResponse, McpDependencies } from '../types.ts';
-import { fail, ok, toolResult } from './responses.ts';
+import { fail, ok, toolError, toolResult } from './responses.ts';
 
 export async function callTool(
   id: string | number | null,
@@ -11,9 +11,14 @@ export async function callTool(
   if (!isRecord(params) || typeof params.name !== 'string')
     return fail(id, -32602, 'Tool name is required');
   const args = isRecord(params.arguments) ? params.arguments : {};
-  if (params.name === 'kifli.search') return callSearchTool(id, args, deps);
-  if (params.name === 'kifli.productDetails')
-    return callDetailsTool(id, args, deps);
+  try {
+    if (params.name === 'kifli.search')
+      return await callSearchTool(id, args, deps);
+    if (params.name === 'kifli.productDetails')
+      return await callDetailsTool(id, args, deps);
+  } catch (error) {
+    return ok(id, toolError(error));
+  }
   return fail(id, -32602, `Unknown tool: ${params.name}`);
 }
 

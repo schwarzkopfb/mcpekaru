@@ -21,6 +21,7 @@ export const tools = [
       },
       additionalProperties: false,
     },
+    annotations: { readOnlyHint: true },
   },
   {
     name: 'kifli.productDetails',
@@ -32,5 +33,6 @@ export const tools = [
       properties: { id: { type: 'string' } },
     },
     outputSchema: productDetailsSchema,
+    annotations: { readOnlyHint: true },
   },
 ];

@@ -1,5 +1,3 @@
-import type { ServerResponse } from 'node:http';
-
 export type ProductSummary = {
   id: string;
   name: string;
@@ -35,10 +33,29 @@ export type McpDependencies = {
   details?: (idOrUrl: string) => Promise<ProductDetails>;
 };
 
-export type Session = { res: ServerResponse };
+export type TokenClaims = Record<string, unknown> & {
+  aud?: string | string[];
+  exp?: number;
+  iss?: string;
+  nbf?: number;
+  permissions?: string[];
+  scope?: string;
+};
+
+export type TokenCheck = (token: string) => Promise<TokenClaims>;
+
+export type AuthDependencies = {
+  fetch?: typeof fetch;
+  now?: () => number;
+};
 
 export type Config = {
+  authAudience: string;
+  authIssuer: string;
+  authScope: string;
   kifliOrigin: string;
+  kifliTimeoutMs: number;
+  mcpUrl: string;
   port: number;
   protocolVersion: string;
   serverName: string;

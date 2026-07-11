@@ -10,7 +10,8 @@ type TextContent = {
 
 type ToolCallResult = {
   content: TextContent[];
-  structuredContent: unknown;
+  structuredContent?: unknown;
+  isError?: boolean;
 };
 
 test('handleMcpRequest dispatches Kifli tools', async () => {
@@ -94,13 +95,33 @@ test('handleMcpRequest reports protocol errors', async () => {
     )?.error?.message,
     'Unknown tool: x',
   );
-  await assert.rejects(
-    () =>
-      handleMcpRequest({
-        jsonrpc: '2.0',
-        method: 'tools/call',
-        params: { name: 'kifli.search', arguments: { query: '' } },
-      }),
-    /query must/,
+  const invalid = await handleMcpRequest({
+    jsonrpc: '2.0',
+    method: 'tools/call',
+    params: { name: 'kifli.search', arguments: { query: '' } },
+  });
+  assert.deepEqual(invalid?.result, {
+    content: [{ type: 'text', text: 'query must be a non-empty string' }],
+    isError: true,
+  });
+});
+
+test('handleMcpRequest reports tool execution failures', async () => {
+  const failed = await handleMcpRequest(
+    {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: { name: 'kifli.search', arguments: { query: 'tej' } },
+    },
+    {
+      async search() {
+        throw 'offline';
+      },
+    },
   );
+  assert.deepEqual(failed?.result, {
+    content: [{ type: 'text', text: 'Tool execution failed' }],
+    isError: true,
+  });
 });

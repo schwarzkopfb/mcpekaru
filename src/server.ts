@@ -1,15 +1,11 @@
-import { randomUUID } from 'node:crypto';
-import {
-  type IncomingMessage,
-  type RequestListener,
-  type Server,
-  type ServerResponse,
-  createServer,
-} from 'node:http';
+import { type RequestListener, type Server, createServer } from 'node:http';
+import { tokenCheck } from './auth/jwt.ts';
+import { authMetadata } from './auth/metadata.ts';
 import { config } from './config.ts';
+import { readRequest } from './http/body.ts';
+import { empty, json } from './http/replies.ts';
 import { handleMcpRequest } from './mcp.ts';
-import { open, send } from './sse.ts';
-import type { JsonRpcRequest, McpDependencies, Session } from './types.ts';
+import type { Config, McpDependencies, TokenCheck } from './types.ts';
 
 export function createMcpHttpServer(deps: McpDependencies = {}): Server {
   return createServer(createMcpRequestHandler(deps));
@@ -17,17 +13,31 @@ export function createMcpHttpServer(deps: McpDependencies = {}): Server {
 
 export function createMcpRequestHandler(
   deps: McpDependencies = {},
+  settings: Config = config,
+  check: TokenCheck = tokenCheck(settings),
 ): RequestListener {
-  const sessions = new Map<string, Session>();
   return async (req, res) => {
     try {
-      if (req.method === 'GET' && req.url === '/sse')
-        return connectSse(res, sessions);
-      if (req.method === 'POST' && req.url?.startsWith('/messages'))
-        return await receiveMessage(req, res, sessions, deps);
-      if (req.method === 'POST' && req.url === '/rpc')
-        return await receiveRpc(req, res, deps);
-      return notFound(res);
+      if (
+        req.method === 'GET' &&
+        req.url === '/.well-known/oauth-protected-resource'
+      )
+        return json(res, 200, authMetadata(settings));
+      if (req.url !== '/mcp') return json(res, 404, { error: 'Not found' });
+      if (req.method !== 'POST') return empty(res, 405, { Allow: 'POST' });
+      const token = bearer(req.headers.authorization);
+      if (!token || !(await allowed(check, token)))
+        return unauthorized(res, settings);
+      let request;
+      try {
+        request = await readRequest(req);
+      } catch (error) {
+        return json(res, 400, {
+          error: error instanceof Error ? error.message : 'Bad request',
+        });
+      }
+      const response = await handleMcpRequest(request, deps);
+      return response ? json(res, 200, response) : empty(res, 202);
     } catch (error) {
       return json(res, 500, {
         error: error instanceof Error ? error.message : 'Internal error',
@@ -38,58 +48,35 @@ export function createMcpRequestHandler(
 
 export function listen(port = config.port): Server {
   return createMcpHttpServer().listen(port, () => {
-    process.stderr.write(
-      `${config.serverName} listening on http://localhost:${port}/sse\n`,
-    );
+    process.stderr.write(`${config.serverName} listening on port ${port}\n`);
   });
 }
 
-function connectSse(res: ServerResponse, sessions: Map<string, Session>): void {
-  const sessionId = randomUUID();
-  open(res);
-  sessions.set(sessionId, { res });
-  res.on('close', () => sessions.delete(sessionId));
-  send(res, 'endpoint', `/messages?sessionId=${sessionId}`);
+function bearer(value: string | undefined): string | undefined {
+  const match = /^Bearer (\S+)$/i.exec(value ?? '');
+  return match?.[1];
 }
 
-async function receiveMessage(
-  req: IncomingMessage,
-  res: ServerResponse,
-  sessions: Map<string, Session>,
-  deps: McpDependencies,
-): Promise<void> {
-  const session = sessions.get(
-    new URL(req.url ?? '', 'http://localhost').searchParams.get('sessionId') ??
-      '',
+async function allowed(check: TokenCheck, token: string): Promise<boolean> {
+  try {
+    await check(token);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function unauthorized(res: Parameters<typeof json>[0], settings: Config): void {
+  const root = new URL(settings.mcpUrl).origin;
+  const metadata = `${root}/.well-known/oauth-protected-resource`;
+  json(
+    res,
+    401,
+    { error: 'Unauthorized' },
+    {
+      'WWW-Authenticate': `Bearer resource_metadata="${metadata}", scope="${settings.authScope}"`,
+    },
   );
-  if (!session) return json(res, 404, { error: 'Unknown SSE session' });
-  const response = await handleMcpRequest(await readJson(req), deps);
-  if (response) send(session.res, 'message', response);
-  return json(res, 202, { accepted: true });
-}
-
-async function receiveRpc(
-  req: IncomingMessage,
-  res: ServerResponse,
-  deps: McpDependencies,
-): Promise<void> {
-  const response = await handleMcpRequest(await readJson(req), deps);
-  return json(res, 200, response ?? { accepted: true });
-}
-
-async function readJson(req: IncomingMessage): Promise<JsonRpcRequest> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(Buffer.from(chunk));
-  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-}
-
-function json(res: ServerResponse, statusCode: number, body: unknown): void {
-  res.writeHead(statusCode, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify(body));
-}
-
-function notFound(res: ServerResponse): void {
-  json(res, 404, { error: 'Not found' });
 }
 
 /* node:coverage ignore next */

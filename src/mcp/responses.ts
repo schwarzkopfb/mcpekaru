@@ -24,3 +24,15 @@ export function toolResult(
     structuredContent,
   };
 }
+
+export function toolError(error: unknown): unknown {
+  return {
+    content: [
+      {
+        type: 'text',
+        text: error instanceof Error ? error.message : 'Tool execution failed',
+      },
+    ],
+    isError: true,
+  };
+}

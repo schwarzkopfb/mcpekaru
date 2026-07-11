@@ -1,0 +1,42 @@
+# mcpekaru
+
+A small authenticated MCP server that lets ChatGPT search products on kifli.hu.
+
+## Configuration
+
+Create an Auth0 API with the `kifli:read` permission, using the public server origin as
+its identifier. In Auth0's advanced tenant settings, enable Dynamic Client
+Registration and the Resource Parameter Compatibility Profile. Configure
+`kifli:read` as a default permission for third-party applications, create your own
+user, and disable public sign-up.
+
+Set these values locally and in Deno Deploy:
+
+```sh
+AUTH0_ISSUER=https://your-tenant.eu.auth0.com/
+AUTH0_AUDIENCE=https://your-app.deno.net
+MCP_URL=https://your-app.deno.net/mcp
+AUTH_SCOPE=kifli:read
+KIFLI_TIMEOUT_MS=10000
+```
+
+`AUTH0_AUDIENCE` must equal the Auth0 API identifier and should be the server origin.
+`MCP_URL` is the full public MCP endpoint. `AUTH_SCOPE` is optional and defaults to
+`kifli:read`. `KIFLI_TIMEOUT_MS` is optional and defaults to ten seconds.
+
+## Run
+
+```sh
+nub run dev
+nub run test
+nub run check
+nub run deno:check
+```
+
+All tasks live in `package.json`, with `nub` as the primary runner. Deno can also
+resolve those scripts through `deno task <name>` when needed; there is no separate
+Deno task configuration.
+
+On Deno Deploy, select `src/server.ts` as the entrypoint and add the environment
+variables as secrets. Then create a developer-mode plugin in ChatGPT using the public
+`/mcp` URL. Add the callback URL shown by ChatGPT to Auth0's allowed callback URLs.
