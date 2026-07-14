@@ -49,6 +49,13 @@ export type AuthDependencies = {
   now?: () => number;
 };
 
+export type PublicFile = {
+  body: Uint8Array;
+  type: string;
+};
+
+export type PublicFiles = ReadonlyMap<string, PublicFile>;
+
 export type Config = {
   authAudience: string;
   authIssuer: string;

@@ -40,3 +40,9 @@ Deno task configuration.
 On Deno Deploy, select `src/server.ts` as the entrypoint and add the environment
 variables as secrets. Then create a developer-mode plugin in ChatGPT using the public
 `/mcp` URL. Add the callback URL shown by ChatGPT to Auth0's allowed callback URLs.
+
+## Public pages
+
+Files under `public/` are loaded into memory when the server starts. HTML files are
+also available without the `.html` extension, and nested `index.html` files serve
+their directory route. Missing routes use `public/404.html` when present.

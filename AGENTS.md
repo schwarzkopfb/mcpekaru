@@ -11,6 +11,7 @@ src/http/     Small HTTP body and response helpers
 src/kifli/    Kifli API URLs, fetching, product URLs, search and detail parsing
 src/mcp/      MCP request handling, tool metadata, schemas, tool calls
 src/shared/   Small non-domain helpers shared across feature folders
+public/       Public pages and resources cached at server startup
 test/         Node.js built-in test files
 docs/adr/     Architectural Decision Records
 package.json  nub scripts and dependency declarations
@@ -67,6 +68,8 @@ Use explicit `.ts` extensions for all local TypeScript imports and re-exports. T
 ## MCP & Kifli Behavior
 
 Expose MCP commands for Kifli product search and product detail lookup. Search should call Kifli's data APIs, extract results, and include a stable SKU/product ID. Detail lookup accepts that ID or a Kifli product URL and fetches direct product data. Expose only the authenticated Streamable HTTP endpoint at `POST /mcp` and OAuth protected-resource metadata. Do not restore legacy `/sse`, `/messages`, or `/rpc` endpoints.
+
+Serve public pages and resources from the startup-cached `public/` route table. Never resolve request paths against the filesystem or perform public-file I/O after startup.
 
 Return minimal, model-friendly JSON. Avoid raw HTML unless needed for debugging.
 

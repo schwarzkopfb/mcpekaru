@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { IncomingMessage } from 'node:http';
 import { Readable } from 'node:stream';
 import { test } from 'node:test';
 import { loadConfig } from '../src/config.ts';
 import { createMcpRequestHandler } from '../src/server.ts';
+import { mockResponse } from './mocks/http.ts';
 
 const settings = loadConfig({
   AUTH0_AUDIENCE: 'https://mcp.example/mcp',
@@ -135,21 +136,14 @@ async function request(
   req.method = options.method ?? 'GET';
   req.url = options.url;
   req.headers = { authorization: options.authorization };
-  const response = {
-    status: 0,
-    headers: {} as Record<string, string>,
-    body: '',
-    writeHead(status: number, headers: Record<string, string>) {
-      this.status = status;
-      this.headers = headers;
-    },
-    end(value = '') {
-      this.body += value;
-    },
-  };
-  await handler(req, response as unknown as ServerResponse);
+  const res = mockResponse();
+  await handler(req, res.response);
+  const response = res.read();
   return {
     ...response,
-    json: response.body ? (JSON.parse(response.body) as unknown) : undefined,
+    json:
+      response.body && response.headers['Content-Type'] === 'application/json'
+        ? (JSON.parse(response.body) as unknown)
+        : undefined,
   };
 }

@@ -3,9 +3,17 @@ import { tokenCheck } from './auth/jwt.ts';
 import { authMetadata } from './auth/metadata.ts';
 import { config } from './config.ts';
 import { readRequest } from './http/body.ts';
+import { loadPublic, servePublic } from './http/public.ts';
 import { empty, json } from './http/replies.ts';
 import { handleMcpRequest } from './mcp.ts';
-import type { Config, McpDependencies, TokenCheck } from './types.ts';
+import type {
+  Config,
+  McpDependencies,
+  PublicFiles,
+  TokenCheck,
+} from './types.ts';
+
+const publicFiles = loadPublic();
 
 export function createMcpHttpServer(deps: McpDependencies = {}): Server {
   return createServer(createMcpRequestHandler(deps));
@@ -15,6 +23,7 @@ export function createMcpRequestHandler(
   deps: McpDependencies = {},
   settings: Config = config,
   check: TokenCheck = tokenCheck(settings),
+  files: PublicFiles = publicFiles,
 ): RequestListener {
   return async (req, res) => {
     try {
@@ -23,7 +32,7 @@ export function createMcpRequestHandler(
         req.url === '/.well-known/oauth-protected-resource'
       )
         return json(res, 200, authMetadata(settings));
-      if (req.url !== '/mcp') return json(res, 404, { error: 'Not found' });
+      if (req.url !== '/mcp') return servePublic(req, res, files);
       if (req.method !== 'POST') return empty(res, 405, { Allow: 'POST' });
       const token = bearer(req.headers.authorization);
       if (!token || !(await allowed(check, token)))
