@@ -11,8 +11,10 @@ src/http/     Small HTTP body and response helpers
 src/kifli/    Kifli API URLs, fetching, product URLs, search and detail parsing
 src/mcp/      MCP request handling, tool metadata, schemas, tool calls
 src/shared/   Small non-domain helpers shared across feature folders
-public/       Public pages and resources cached at server startup
 test/         Node.js built-in test files
+pages/        Markdown page sources and the shared HTML template
+public/       Generated public HTML and shared static assets
+scripts/      Small development and content build scripts
 docs/adr/     Architectural Decision Records
 package.json  nub scripts and dependency declarations
 lock.yaml     nub lockfile
@@ -23,6 +25,9 @@ Keep modules small, atomic, and feature-scoped: isolate authentication, HTTP tra
 Prefer files under 100 source lines of code. If a file exceeds that target, it should contain exactly one cohesive object, class, function, or schema; otherwise split it into smaller responsibility-focused modules before adding more behavior. When a single large object is unavoidable, consider whether an ADR or a more explicit architecture would make ownership clearer.
 
 Use short, expressive names. Avoid enterprise-style names, redundant suffixes, and abstractions that only rename one operation. Prefer a small function or module with one obvious purpose over manager, service, provider, factory, or orchestration layers.
+
+Keep languages and technologies in separate files. Mix them only when unavoidable
+and limited to a few lines.
 
 Put shared types in `src/types.ts`; do not define reusable exported types in feature modules. Read config through `src/config.ts`, which loads env vars first, then defaults.
 
@@ -48,12 +53,16 @@ Keep ADRs concise and concrete. Record the decision and its project-specific tra
 Use latest Node.js with TypeScript through `nub.js` as the primary project tool. Deno is a deployment target running the Node-compatible application, not a second task system. Keep every task in `package.json` so `nub run <task>` is authoritative and `deno task <task>` can reuse it. Do not add `deno.json`, require `npm`, or add a separate TypeScript precompile.
 
 ```sh
+nub run build  # Generate public HTML pages from pages/*.md
 nub run dev    # Run the local MCP server
 nub run test   # Run node:test with 100% coverage thresholds
 nub run check  # Syntax-check TypeScript without emitting output
 nub run deno:check # Verify the Deno deployment target
 nub run format # Format all files with Prettier
 ```
+
+Treat `pages/*.md` as the source of truth for public page content. Run the build
+task after editing it and commit the matching generated `public/*.html` files.
 
 Do not add runners, bundlers, transpilers, or wrappers unless they reduce code.
 

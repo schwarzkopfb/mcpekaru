@@ -27,6 +27,7 @@ KIFLI_TIMEOUT_MS=10000
 ## Run
 
 ```sh
+nub run build
 nub run dev
 nub run test
 nub run check
@@ -42,6 +43,10 @@ variables as secrets. Then create a developer-mode plugin in ChatGPT using the p
 `/mcp` URL. Add the callback URL shown by ChatGPT to Auth0's allowed callback URLs.
 
 ## Public pages
+
+Registry page sources live under `pages/`. Run `nub run build` after changing them to
+generate the matching HTML files under `public/`; generated pages share
+`public/style.css`.
 
 Files under `public/` are loaded into memory when the server starts. HTML files are
 also available without the `.html` extension, and nested `index.html` files serve
