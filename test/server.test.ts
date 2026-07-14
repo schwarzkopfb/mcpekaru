@@ -3,7 +3,9 @@ import type { IncomingMessage } from 'node:http';
 import { Readable } from 'node:stream';
 import { test } from 'node:test';
 import { loadConfig } from '../src/config.ts';
+import { createLog } from '../src/log.ts';
 import { createMcpRequestHandler } from '../src/server.ts';
+import type { LogEntry } from '../src/types.ts';
 import { mockResponse } from './mocks/http.ts';
 
 const settings = loadConfig({
@@ -12,9 +14,16 @@ const settings = loadConfig({
   MCP_URL: 'https://mcp.example/mcp',
 });
 const accept = async () => ({ exp: 1 });
+const silent = createLog(() => {});
 
 test('serves protected resource metadata', async () => {
-  const handler = createMcpRequestHandler({}, settings, accept);
+  const handler = createMcpRequestHandler(
+    {},
+    settings,
+    accept,
+    new Map(),
+    silent,
+  );
   const response = await request(handler, {
     url: '/.well-known/oauth-protected-resource',
   });
@@ -27,7 +36,13 @@ test('serves protected resource metadata', async () => {
 });
 
 test('accepts authenticated MCP requests and notifications', async () => {
-  const handler = createMcpRequestHandler({}, settings, accept);
+  const handler = createMcpRequestHandler(
+    {},
+    settings,
+    accept,
+    new Map(),
+    silent,
+  );
   const listed = await request(handler, {
     url: '/mcp',
     method: 'POST',
@@ -54,10 +69,17 @@ test('accepts authenticated MCP requests and notifications', async () => {
 });
 
 test('rejects missing and invalid access tokens', async () => {
+  const capture = logs();
   const reject = async () => {
     throw new Error('no');
   };
-  const handler = createMcpRequestHandler({}, settings, reject);
+  const handler = createMcpRequestHandler(
+    {},
+    settings,
+    reject,
+    new Map(),
+    capture.logger,
+  );
   for (const authorization of [undefined, 'Basic value', 'Bearer bad']) {
     const response = await request(handler, {
       url: '/mcp',
@@ -68,10 +90,22 @@ test('rejects missing and invalid access tokens', async () => {
     assert.equal(response.status, 401);
     assert.match(response.headers['WWW-Authenticate'], /kifli:read/);
   }
+  assert.deepEqual(
+    capture.entries
+      .filter((entry) => entry.event === 'auth_rejected')
+      .map((entry) => entry.reason),
+    ['Missing bearer token', 'Missing bearer token', 'no'],
+  );
 });
 
 test('rejects old endpoints, unsupported methods, and invalid JSON', async () => {
-  const handler = createMcpRequestHandler({}, settings, accept);
+  const handler = createMcpRequestHandler(
+    {},
+    settings,
+    accept,
+    new Map(),
+    silent,
+  );
   assert.equal((await request(handler, { url: '/rpc' })).status, 404);
   const method = await request(handler, { url: '/mcp' });
   assert.equal(method.status, 405);
@@ -86,11 +120,40 @@ test('rejects old endpoints, unsupported methods, and invalid JSON', async () =>
 });
 
 test('reports unexpected server failures as HTTP 500', async () => {
+  const capture = logs();
   const broken = { ...settings, mcpUrl: 'not a URL' };
-  const handler = createMcpRequestHandler({}, broken, accept);
+  const handler = createMcpRequestHandler(
+    {},
+    broken,
+    accept,
+    new Map(),
+    capture.logger,
+  );
   const response = await request(handler, { url: '/mcp', method: 'POST' });
   assert.equal(response.status, 500);
   assert.match((response.json as { error: string }).error, /Invalid URL/);
+  const failure = capture.entries.find(
+    (entry) => entry.event === 'request_failed',
+  );
+  assert.match(String(failure?.message), /Invalid URL/);
+  assert.equal(typeof failure?.stack, 'string');
+});
+
+test('logs request outcomes without query strings', async () => {
+  const capture = logs();
+  const handler = createMcpRequestHandler(
+    {},
+    settings,
+    accept,
+    new Map(),
+    capture.logger,
+  );
+  await request(handler, { url: '/missing?secret=value' });
+  const entry = capture.entries.find((item) => item.event === 'http_request');
+  assert.equal(entry?.method, 'GET');
+  assert.equal(entry?.path, '/missing');
+  assert.equal(entry?.status, 404);
+  assert.equal(typeof entry?.durationMs, 'number');
 });
 
 test('returns tool failures through MCP over HTTP 200', async () => {
@@ -102,6 +165,8 @@ test('returns tool failures through MCP over HTTP 200', async () => {
     },
     settings,
     accept,
+    new Map(),
+    silent,
   );
   const response = await request(handler, {
     url: '/mcp',
@@ -145,5 +210,16 @@ async function request(
       response.body && response.headers['Content-Type'] === 'application/json'
         ? (JSON.parse(response.body) as unknown)
         : undefined,
+  };
+}
+
+function logs() {
+  const entries: LogEntry[] = [];
+  return {
+    entries,
+    logger: createLog(
+      (entry) => entries.push(entry),
+      () => new Date('2026-07-15T00:00:00.000Z'),
+    ),
   };
 }

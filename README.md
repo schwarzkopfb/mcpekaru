@@ -51,3 +51,9 @@ generate the matching HTML files under `public/`; generated pages share
 Files under `public/` are loaded into memory when the server starts. HTML files are
 also available without the `.html` extension, and nested `index.html` files serve
 their directory route. Missing routes use `public/404.html` when present.
+
+## Logging
+
+The server writes newline-delimited JSON logs to stderr for startup, completed HTTP
+requests, authentication rejections, and unexpected failures. Logs intentionally
+exclude bearer tokens, authorization headers, request bodies, and query strings.

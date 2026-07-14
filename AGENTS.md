@@ -111,6 +111,13 @@ Separate the subject from the body with a blank line. The body must contain a
 short list of the significant changes in the commit and explain what changed
 and why. Wrap body lines at 72 characters.
 
+### Solo development workflow
+
+This is currently a small hobby project developed and used only by its owner. Work
+directly on `main`; do not create feature branches or pull requests unless the user
+explicitly requests them. When the user asks for a commit, create it on `main` using
+the applicable development session mode below.
+
 ### Development session modes
 
 This repository supports two development session modes:
@@ -156,8 +163,9 @@ Before publishing work created in remote mode, all unpublished commits must be
 rewritten as signed commits using the project’s signing workflow. Only after
 that may the branch be pushed.
 
-Pull requests should include the MCP commands changed, verification commands,
-coverage result, and notes for any Kifli API response shape changes.
+When explicitly requested, pull requests should include the MCP commands changed,
+verification commands, coverage result, and notes for any Kifli API response shape
+changes.
 
 ## Security & Configuration Tips
 

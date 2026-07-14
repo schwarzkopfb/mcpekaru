@@ -56,6 +56,22 @@ export type PublicFile = {
 
 export type PublicFiles = ReadonlyMap<string, PublicFile>;
 
+export type LogFields = Record<string, string | number | boolean | undefined>;
+
+export type LogEntry = LogFields & {
+  time: string;
+  level: 'info' | 'warn' | 'error';
+  event: string;
+};
+
+export type LogSink = (entry: LogEntry) => void;
+
+export type Logger = {
+  info: (event: string, fields?: LogFields) => void;
+  warn: (event: string, fields?: LogFields) => void;
+  error: (event: string, fields?: LogFields) => void;
+};
+
 export type Config = {
   authAudience: string;
   authIssuer: string;
