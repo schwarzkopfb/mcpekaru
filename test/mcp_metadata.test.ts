@@ -11,6 +11,11 @@ type JsonSchema = {
 };
 
 type ToolMetadata = {
+  annotations: {
+    readOnlyHint: boolean;
+    openWorldHint: boolean;
+    destructiveHint: boolean;
+  };
   outputSchema: JsonSchema;
 };
 
@@ -32,6 +37,13 @@ test('handleMcpRequest initializes and lists tools', async () => {
   });
   const tools = (list?.result as { tools: ToolMetadata[] }).tools;
   assert.equal(tools.length, 2);
+  const readOnlyAnnotations = {
+    readOnlyHint: true,
+    openWorldHint: false,
+    destructiveHint: false,
+  };
+  assert.deepEqual(tools[0].annotations, readOnlyAnnotations);
+  assert.deepEqual(tools[1].annotations, readOnlyAnnotations);
   assert.deepEqual(tools[0].outputSchema.required, ['products']);
   assert.equal(tools[0].outputSchema.properties.products.type, 'array');
   assert.deepEqual(tools[1].outputSchema.required, [
