@@ -43,21 +43,47 @@ test('logging helpers normalize unknown failures', async () => {
   assert.deepEqual(errorInfo('failed'), { message: 'Unknown error' });
 });
 
-test('default logger writes JSON lines to stderr', () => {
-  const original = process.stderr.write;
-  let output = '';
-  process.stderr.write = ((value: string | Uint8Array) => {
-    output += value.toString();
-    return true;
-  }) as typeof process.stderr.write;
+test('default logger writes JSON through level-matched console methods', () => {
+  const originals = {
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
+  };
+  const output: string[] = [];
+  console.info = (value) => output.push(`info:${value}`);
+  console.warn = (value) => output.push(`warn:${value}`);
+  console.error = (value) => output.push(`error:${value}`);
   try {
-    createLog(undefined, () => new Date('2026-07-15T00:00:00.000Z')).info(
-      'ready',
+    const log = createLog(
+      undefined,
+      () => new Date('2026-07-15T00:00:00.000Z'),
     );
+    log.info('ready');
+    log.warn('careful');
+    log.error('failed');
   } finally {
-    process.stderr.write = original;
+    console.info = originals.info;
+    console.warn = originals.warn;
+    console.error = originals.error;
   }
-  assert.deepEqual(JSON.parse(output), {
+  assert.deepEqual(output, [
+    `info:${JSON.stringify({
+      time: '2026-07-15T00:00:00.000Z',
+      level: 'info',
+      event: 'ready',
+    })}`,
+    `warn:${JSON.stringify({
+      time: '2026-07-15T00:00:00.000Z',
+      level: 'warn',
+      event: 'careful',
+    })}`,
+    `error:${JSON.stringify({
+      time: '2026-07-15T00:00:00.000Z',
+      level: 'error',
+      event: 'failed',
+    })}`,
+  ]);
+  assert.deepEqual(JSON.parse(output[0]!.slice('info:'.length)), {
     time: '2026-07-15T00:00:00.000Z',
     level: 'info',
     event: 'ready',

@@ -17,7 +17,7 @@ export function createLog(
 }
 
 function write(entry: Parameters<LogSink>[0]): void {
-  process.stderr.write(`${JSON.stringify(entry)}\n`);
+  console[entry.level](JSON.stringify(entry));
 }
 
 export const log = createLog();
