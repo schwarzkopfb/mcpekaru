@@ -8,6 +8,7 @@ import categoriesPayload from './fixtures/kifli_categories_payload.json' with { 
 import pricesPayload from './fixtures/kifli_prices_payload.json' with { type: 'json' };
 import productPayload from './fixtures/kifli_product_payload.json' with { type: 'json' };
 import searchPayload from './fixtures/kifli_search_payload.json' with { type: 'json' };
+import stockPayload from './fixtures/kifli_stock_payload.json' with { type: 'json' };
 
 test('extractProductDetailsFromApiResponses reads product, price, and category data', () => {
   assert.deepEqual(
@@ -15,6 +16,7 @@ test('extractProductDetailsFromApiResponses reads product, price, and category d
       productPayload,
       pricesPayload,
       categoriesPayload,
+      stockPayload,
       '97506',
     ),
     {
@@ -32,10 +34,13 @@ test('extractProductDetailsFromApiResponses reads product, price, and category d
         categories:
           'Tejtermék és tojás > Tej és tej alapú ital > Friss, féltartós, ESL tej',
       },
+      inStock: false,
+      maxBasketAmount: 0,
+      unavailabilityReason: 'Elfogyott. Várható ma.',
     },
   );
   assert.deepEqual(
-    extractProductDetailsFromApiResponses([], [], [], 'missing'),
+    extractProductDetailsFromApiResponses([], [], [], [], 'missing'),
     {
       id: 'missing',
       name: 'missing',
@@ -51,6 +56,7 @@ test('getKifliProductDetails fetches direct detail APIs for numeric IDs', async 
     'https://www.kifli.hu/api/v1/products?products=97506',
     'https://www.kifli.hu/api/v1/products/prices?products=97506',
     'https://www.kifli.hu/api/v1/products/categories?products=97506',
+    'https://www.kifli.hu/api/v1/products/stock?products=97506',
   ]);
   assert.equal(result.name, 'Miil ESL teljes tej 3,5% zsírtartalommal');
 });
@@ -73,6 +79,7 @@ test('getKifliProductDetails resolves productPopup URLs and search terms', async
     'https://www.kifli.hu/api/v1/products?products=76368',
     'https://www.kifli.hu/api/v1/products/prices?products=76368',
     'https://www.kifli.hu/api/v1/products/categories?products=76368',
+    'https://www.kifli.hu/api/v1/products/stock?products=76368',
   ]);
 });
 
@@ -82,6 +89,7 @@ function fakeFetcher(calls: string[]) {
     if (url.includes('/services/frontend-service/search')) return searchPayload;
     if (url.includes('/api/v1/products/prices')) return pricesPayload;
     if (url.includes('/api/v1/products/categories')) return categoriesPayload;
+    if (url.includes('/api/v1/products/stock')) return stockPayload;
     return productPayload;
   };
 }

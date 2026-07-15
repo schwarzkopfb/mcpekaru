@@ -46,6 +46,10 @@ test('handleMcpRequest initializes and lists tools', async () => {
   assert.deepEqual(tools[1].annotations, readOnlyAnnotations);
   assert.deepEqual(tools[0].outputSchema.required, ['products']);
   assert.equal(tools[0].outputSchema.properties.products.type, 'array');
+  assert.equal(
+    tools[0].outputSchema.properties.products.items?.properties.inStock.type,
+    'boolean',
+  );
   assert.deepEqual(tools[1].outputSchema.required, [
     'id',
     'name',

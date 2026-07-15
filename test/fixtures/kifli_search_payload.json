@@ -5,12 +5,18 @@
         "productId": 76368,
         "productName": "Kinder tejszelet",
         "baseLink": "76368-kinder-tejszelet",
-        "price": { "full": 229, "currency": "Ft" }
+        "price": { "full": 229, "currency": "Ft" },
+        "inStock": true,
+        "maxBasketAmount": 50,
+        "unavailabilityReason": null
       },
       {
         "productId": 97506,
         "productName": "Miil ESL teljes tej",
-        "link": "?productPopup=97506-miil-esl-teljes-tej"
+        "link": "?productPopup=97506-miil-esl-teljes-tej",
+        "inStock": false,
+        "maxBasketAmount": 0,
+        "unavailabilityReason": "Elfogyott. Várható ma."
       }
     ]
   }

@@ -1,5 +1,6 @@
 import { isRecord, stringValue } from '../shared/values.ts';
 import type { ProductSummary } from '../types.ts';
+import { productAvailability } from './availability.ts';
 import { productPopupValue, productUrl } from './product_urls.ts';
 
 export function extractProductSummariesFromSearchResponse(
@@ -20,6 +21,7 @@ function productSummaryFromSearchProduct(
   const baseLink = stringValue(product.baseLink);
   const link = stringValue(product.link);
   return {
+    ...productAvailability(product),
     id,
     name: stringValue(product.productName) || stringValue(product.name),
     url: productUrl(id, baseLink || productPopupValue(link)),

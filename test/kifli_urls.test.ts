@@ -5,10 +5,15 @@ import {
   buildProductApiUrl,
   buildProductCategoriesApiUrl,
   buildProductPricesApiUrl,
+  buildProductStockApiUrl,
   buildSearchApiUrl,
 } from '../src/kifli.ts';
 
 test('build API URLs encode Kifli values', () => {
+  assert.equal(
+    buildProductStockApiUrl('97506'),
+    'https://www.kifli.hu/api/v1/products/stock?products=97506',
+  );
   assert.equal(
     buildSearchApiUrl('kakaos csiga'),
     'https://www.kifli.hu/services/frontend-service/search?query=kakaos+csiga&offset=0&limit=24',

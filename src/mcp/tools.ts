@@ -4,7 +4,7 @@ export const tools = [
   {
     name: 'kifli.search',
     description:
-      'Search kifli.hu products and return names, URLs, and SKU/product IDs.',
+      'Search kifli.hu products and return current stock availability, names, URLs, and SKU/product IDs.',
     inputSchema: {
       type: 'object',
       required: ['query'],
@@ -30,7 +30,7 @@ export const tools = [
   {
     name: 'kifli.productDetails',
     description:
-      'Fetch detailed kifli.hu product information by SKU, product ID, or URL.',
+      'Fetch detailed kifli.hu product information and current stock availability by SKU, product ID, or URL.',
     inputSchema: {
       type: 'object',
       required: ['id'],

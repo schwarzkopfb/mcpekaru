@@ -6,6 +6,9 @@ export const productSummarySchema = {
     name: { type: 'string' },
     url: { type: 'string' },
     price: { type: 'string' },
+    inStock: { type: 'boolean' },
+    maxBasketAmount: { type: 'number' },
+    unavailabilityReason: { type: 'string' },
   },
   additionalProperties: false,
 };

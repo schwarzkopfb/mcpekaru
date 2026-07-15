@@ -13,12 +13,18 @@ test('extractProductSummariesFromSearchResponse reads Kifli frontend search data
       name: 'Kinder tejszelet',
       url: 'https://www.kifli.hu/?productPopup=76368-kinder-tejszelet',
       price: '229 Ft',
+      inStock: true,
+      maxBasketAmount: 50,
+      unavailabilityReason: undefined,
     },
     {
       id: '97506',
       name: 'Miil ESL teljes tej',
       url: 'https://www.kifli.hu/?productPopup=97506-miil-esl-teljes-tej',
       price: undefined,
+      inStock: false,
+      maxBasketAmount: 0,
+      unavailabilityReason: 'Elfogyott. Várható ma.',
     },
   ]);
   assert.deepEqual(extractProductSummariesFromSearchResponse({}), []);

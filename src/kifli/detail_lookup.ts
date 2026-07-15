@@ -3,6 +3,7 @@ import {
   buildProductApiUrl,
   buildProductCategoriesApiUrl,
   buildProductPricesApiUrl,
+  buildProductStockApiUrl,
 } from './api_urls.ts';
 import { extractProductDetailsFromApiResponses } from './detail_parser.ts';
 import { fetchJson } from './fetch_json.ts';
@@ -14,12 +15,19 @@ export async function getKifliProductDetails(
   getJson: JsonFetcher = fetchJson,
 ): Promise<ProductDetails> {
   const id = await resolveProductId(idOrUrl, getJson);
-  const [product, prices, categories] = await Promise.all([
+  const [product, prices, categories, stock] = await Promise.all([
     getJson(buildProductApiUrl(id)),
     getJson(buildProductPricesApiUrl(id)),
     getJson(buildProductCategoriesApiUrl(id)),
+    getJson(buildProductStockApiUrl(id)),
   ]);
-  return extractProductDetailsFromApiResponses(product, prices, categories, id);
+  return extractProductDetailsFromApiResponses(
+    product,
+    prices,
+    categories,
+    stock,
+    id,
+  );
 }
 
 async function resolveProductId(

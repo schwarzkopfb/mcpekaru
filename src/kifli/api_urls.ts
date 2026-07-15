@@ -21,6 +21,12 @@ export function buildProductPricesApiUrl(id: string): string {
   );
 }
 
+export function buildProductStockApiUrl(id: string): string {
+  return absoluteKifliUrl(
+    `/api/v1/products/stock?products=${encodeURIComponent(id)}`,
+  );
+}
+
 export function buildProductCategoriesApiUrl(id: string): string {
   return absoluteKifliUrl(
     `/api/v1/products/categories?products=${encodeURIComponent(id)}`,

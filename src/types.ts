@@ -1,4 +1,10 @@
-export type ProductSummary = {
+export type ProductAvailability = {
+  inStock?: boolean;
+  maxBasketAmount?: number;
+  unavailabilityReason?: string;
+};
+
+export type ProductSummary = ProductAvailability & {
   id: string;
   name: string;
   url?: string;

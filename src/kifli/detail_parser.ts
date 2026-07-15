@@ -1,11 +1,13 @@
 import { isRecord, numberValue, stringValue } from '../shared/values.ts';
 import type { ProductDetails } from '../types.ts';
+import { productAvailability } from './availability.ts';
 import { productUrl } from './product_urls.ts';
 
 export function extractProductDetailsFromApiResponses(
   productsPayload: unknown,
   pricesPayload: unknown,
   categoriesPayload: unknown,
+  stockPayload: unknown,
   fallbackId: string,
 ): ProductDetails {
   const product = firstRecord(productsPayload);
@@ -13,6 +15,7 @@ export function extractProductDetailsFromApiResponses(
   const id = stringValue(product.id) || fallbackId;
   const categories = categoriesFromPayload(categoriesPayload, id);
   return {
+    ...productAvailability(matchingRecord(stockPayload, id)),
     id,
     name: stringValue(product.name) || id,
     url: productUrl(id, stringValue(product.slug)),
